@@ -121,11 +121,99 @@ test('login as admin', async ({ page }) => {
 
   });
 
-  test('add menu item', async ({ page }) => {
+  test('delete franchise', async ({ page }) => {
     //mocked login
-    
+    await page.route('*/**/api/auth', async (route) => {
+        const loginReq = { email: 'a@jwt.com', password: 'admin' };
+        const loginRes = { user: { id: 3, name: '常用名字', email: 'a@jwt.com', roles: [{ role: 'admin' }] }, token: 'abcdef' };
+        expect(route.request().method()).toBe('PUT');
+        expect(route.request().postDataJSON()).toMatchObject(loginReq);
+        await route.fulfill({ json: loginRes });
+      });
+
+      await page.route('*/**/api/franchise', async (route) => {
+        //const listReq = { email: 'a@jwt.com', password: 'admin' };
+        const listRes = [
+            {
+              id: 2,
+              name: 'LotaPizza',
+              stores: [
+              ],
+            }
+          ];
+        expect(route.request().method()).toBe('GET');
+        //expect(route.request().postDataJSON()).toMatchObject(listReq);
+        await route.fulfill({ json: listRes });
+      });
+
+      await page.route('*/**/api/franchise/2', async (route) => {
+        const deleteRes = { message: 'franchise deleted' };
+        expect(route.request().method()).toBe('DELETE');
+        await route.fulfill({ json: deleteRes });
+      });
 
 
+
+      await page.goto('http://localhost:5173/');
+    await page.getByRole('link', { name: 'Login' }).click();
+    await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
+    await page.getByRole('textbox', { name: 'Password' }).click();
+    await page.getByRole('textbox', { name: 'Password' }).fill('admin');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('link', { name: 'Admin' }).click();
+    await page.getByRole('row', { name: 'LotaPizza Close' }).getByRole('button').click();
+    await page.getByRole('button', { name: 'Close' }).click();
+
+
+
+
+  });
+
+  test('delete store', async ({ page }) => {
+    //mocked login
+    await page.route('*/**/api/auth', async (route) => {
+        const loginReq = { email: 'a@jwt.com', password: 'admin' };
+        const loginRes = { user: { id: 3, name: '常用名字', email: 'a@jwt.com', roles: [{ role: 'admin' }] }, token: 'abcdef' };
+        expect(route.request().method()).toBe('PUT');
+        expect(route.request().postDataJSON()).toMatchObject(loginReq);
+        await route.fulfill({ json: loginRes });
+      });
+
+      //mocked get user franchises
+      await page.route('*/**/api/franchise/3', async (route) => {
+        const loginReq = {bearer : 'abcdef'}
+        const loginRes = [
+            {
+              id: 2,
+              name: 'LotaPizza',
+              stores: [{ id: 4, name: 'Lehi' }
+              ],
+            }
+          ];
+        expect(route.request().method()).toBe('GET');
+        //expect(route.request().postDataJSON()).toMatchObject(loginReq);
+        await route.fulfill({ json: loginRes });
+      });
+
+      await page.route('*/**/api/franchise/3/store/2', async (route) => {
+        const deleteRes = { message: 'store deleted' }
+        expect(route.request().method()).toBe('DELETE');
+        await route.fulfill({ json: deleteRes });
+
+      });
+
+
+
+
+    await page.goto('http://localhost:5173/');
+    await page.getByRole('link', { name: 'Login' }).click();
+    await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
+    await page.getByRole('textbox', { name: 'Password' }).click();
+    await page.getByRole('textbox', { name: 'Password' }).fill('admin');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('link', { name: 'Franchise' }).click();
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.getByRole('button', { name: 'Close' }).click();
 
 
   });
